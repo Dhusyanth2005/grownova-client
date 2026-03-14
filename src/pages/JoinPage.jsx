@@ -3,12 +3,12 @@ import Logo from "../assets/grownovabgless.png";
 import {
   Play, CheckCircle, MessageCircle, ChevronRight,
   User, Phone, Mail, Calendar, MapPin, Briefcase,
-  AlertTriangle, Clock, Search, ChevronDown, X, Home,
+  AlertTriangle, Clock, Search, ChevronDown, X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 // ─── Config ───────────────────────────────────────────────────
-const WHATSAPP_NUMBER   = "919876543210";
+const WHATSAPP_NUMBER   = "916382612951";
 const WEBINAR_VIDEO_SRC = "https://webinar-gatekeeper.free-session-no-fees-just-join-and-learn.workers.dev/?expires=1773480600&token=c78019dc24bf54187f8062002cef4f3696f7ed035e98bfe16a9c8f11a09994d3";
 const REQUIRED_SECONDS  = 10; // change to 30 * 60 for production
 
@@ -208,8 +208,8 @@ function StepBar({ step }) {
 function FormStep({ onNext }) {
   const [form, setForm] = useState({
     fullName: "", mobile: "", email: "",
-    dob: "", address: "", state: "",
-    pincode: "", jobType: "", profession: "",
+    dob: "", city: "", district: "",
+    state: "", pincode: "", jobType: "", profession: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -221,7 +221,8 @@ function FormStep({ onNext }) {
     if (!form.fullName.trim())          e.fullName   = "Full name is required";
     if (!/^\d{10}$/.test(form.mobile))  e.mobile     = "Enter a valid 10-digit number";
     if (form.email && !/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter a valid email";
-    if (!form.address.trim())           e.address    = "Address is required";
+    if (!form.city.trim())              e.city       = "City is required";
+    if (!form.district.trim())          e.district   = "District is required";
     if (!form.state)                    e.state      = "State is required";
     if (!form.jobType)                  e.jobType    = "Select job type";
     if (!form.profession)               e.profession = "Select your profession";
@@ -304,15 +305,24 @@ function FormStep({ onNext }) {
           <SectionHeader icon={MapPin} en="Location Details" ta="இடம் விவரங்கள்" />
           <div className="flex flex-col gap-4">
 
-            <Field labelEN="Address" labelTA="முகவரி" icon={Home} error={errors.address} required>
-              <textarea
-                className={textareaCls}
-                placeholder="House No, Street, Area, City..."
-                value={form.address}
-                onChange={set("address")}
-                rows={3}
-              />
-            </Field>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field labelEN="City / Town" labelTA="நகரம்" icon={MapPin} error={errors.city} required>
+                <input
+                  className={inputCls}
+                  placeholder="Your city or town"
+                  value={form.city}
+                  onChange={set("city")}
+                />
+              </Field>
+              <Field labelEN="District" labelTA="மாவட்டம்" error={errors.district} required>
+                <input
+                  className={inputCls}
+                  placeholder="Enter your district"
+                  value={form.district}
+                  onChange={set("district")}
+                />
+              </Field>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field labelEN="State" labelTA="மாநிலம்" icon={MapPin} error={errors.state} required>
@@ -636,7 +646,7 @@ function VideoStep({ onNext }) {
 // ─── STEP 3 — Success ─────────────────────────────────────────
 function SuccessStep({ formData }) {
   const message = encodeURIComponent(
-    `Hi! I just completed the Grow Nova webinar.\n\nName: ${formData.fullName}\nMobile: ${formData.mobile}\nAddress: ${formData.address}\nState: ${formData.state}\nJob Type: ${formData.jobType}\nProfession: ${formData.profession}\n\nI am interested in joining Grow Nova!`
+    `Hi! I just completed the Grow Nova webinar.\n\nName: ${formData.fullName}\nMobile: ${formData.mobile}\nCity: ${formData.city}\nDistrict: ${formData.district}\nState: ${formData.state}\nJob Type: ${formData.jobType}\nProfession: ${formData.profession}\n\nI am interested in joining Grow Nova!`
   );
   const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
 
@@ -677,24 +687,20 @@ function SuccessStep({ formData }) {
         </p>
         <div className="grid grid-cols-2 gap-4">
           {[
-            ["Name / பெயர்",        formData.fullName],
-            ["Mobile / மொபைல்",     formData.mobile],
-            ["State / மாநிலம்",     formData.state],
-            ["Pin Code",             formData.pincode || "—"],
-            ["Job Type / வேலை வகை", formData.jobType],
-            ["Profession / தொழில்", formData.profession],
+            ["Name / பெயர்",         formData.fullName],
+            ["Mobile / மொபைல்",      formData.mobile],
+            ["City / நகரம்",         formData.city],
+            ["District / மாவட்டம்",  formData.district],
+            ["State / மாநிலம்",      formData.state],
+            ["Pin Code",              formData.pincode || "—"],
+            ["Job Type / வேலை வகை",  formData.jobType],
+            ["Profession / தொழில்",  formData.profession],
           ].map(([k, v]) => (
             <div key={k} className="flex flex-col gap-0.5">
               <span className="text-[10px] text-gray-400 uppercase tracking-wide">{k}</span>
               <span className="text-sm text-green-900 font-semibold capitalize">{v || "—"}</span>
             </div>
           ))}
-        </div>
-        <div className="mt-3 pt-3 border-t border-green-200">
-          <span className="text-[10px] text-gray-400 uppercase tracking-wide block mb-1">
-            Address / முகவரி
-          </span>
-          <span className="text-sm text-green-900 font-semibold">{formData.address}</span>
         </div>
       </div>
 
@@ -742,7 +748,7 @@ export default function JoinPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 mb-3">
-            <img src={Logo} alt="logo" className="w-60" />
+           <img src={Logo} alt="logo" className="w-60" />
           </div>
           <p className="text-sm text-gray-400">
             உங்கள் எதிர்கால பயணம் இங்கே தொடங்குகிறது — Your journey starts here
