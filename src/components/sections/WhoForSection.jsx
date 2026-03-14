@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { WHO_FOR } from "../../data/constants";
+import { WHO_FOR } from "../../data/Constants";
 
 /* ─────────────────────────────────────────────────────────────
    WhoCard — Aceternity "Feature" grid card, Grow Nova theme

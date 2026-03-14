@@ -1,6 +1,6 @@
 import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TESTIMONIALS } from "../../data/constants";
+import { TESTIMONIALS } from "../../data/Constants";
 
 function TestimonialCard({ translationKey, initials, gradient }) {
   const { t } = useTranslation("testimonials");

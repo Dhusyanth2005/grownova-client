@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { QUOTES } from "../../data/constants";
+import { QUOTES } from "../../data/Constants";
 
 function QuoteItem({ number, translationKey }) {
   const { t } = useTranslation("quotes");

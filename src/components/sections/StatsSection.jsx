@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
-import { STATS } from "../../data/constants";
+import { STATS } from "../../data/Constants";
 
 // Parses "10K+", "98%", "500+" → { number: 10000, suffix: "K+" } etc.
 function parseValue(value) {

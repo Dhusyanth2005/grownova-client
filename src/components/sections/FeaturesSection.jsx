@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "motion/react";
-import { FEATURES } from "../../data/constants";
+import { FEATURES } from "../../data/Constants";
 
 /* ─── Hover Effect Wrapper ─── */
 function HoverEffect({ items }) {

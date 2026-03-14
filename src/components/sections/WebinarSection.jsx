@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { WEBINAR_RULES } from "../../data/constants";
+import { WEBINAR_RULES } from "../../data/Constants";
 
 function RuleCard({ number, translationKey }) {
   const { t } = useTranslation("webinar");
