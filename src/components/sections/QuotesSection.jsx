@@ -3,175 +3,143 @@ import { QUOTES } from "../../data/Constants";
 import { motion } from "framer-motion";
 import { Rocket, GitBranch, TrendingUp, Clock, Star } from "lucide-react";
 
-/* ─── Image map — one Unsplash photo per quote theme ─── */
-const QUOTE_IMAGES = [
+/* ─── Per-quote config ─── */
+const QUOTE_META = [
   {
-    url: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",
-    accent: "#1a6b3c",
+    url: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=900&q=80",
     Icon: Rocket,
+    from: "#0f3d22",
+    to: "#1a6b3c",
   },
   {
-    url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
-    accent: "#2e7d32",
+    url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80",
     Icon: GitBranch,
+    from: "#1a3d2b",
+    to: "#2e7d32",
   },
   {
-    url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80",
-    accent: "#388e3c",
+    url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&q=80",
     Icon: TrendingUp,
+    from: "#0d2e1a",
+    to: "#388e3c",
   },
   {
-    url: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80",
-    accent: "#43a047",
+    url: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=900&q=80",
     Icon: Clock,
+    from: "#14321f",
+    to: "#43a047",
   },
   {
-    url: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80",
-    accent: "#1b5e20",
+    url: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=900&q=80",
     Icon: Star,
+    from: "#071a0e",
+    to: "#1b5e20",
   },
 ];
 
-/* ─── Roman numerals for decoration ─── */
-const ROMAN = ["I", "II", "III", "IV", "V"];
+/* ─── Grid slot sizes — bento shape ─── */
+const GRID_SPANS = [
+  { col: "lg:col-span-2", minH: 380 }, /* wide hero   */
+  { col: "lg:col-span-1", minH: 380 }, /* tall right  */
+  { col: "lg:col-span-1", minH: 300 }, /* row 2 left  */
+  { col: "lg:col-span-1", minH: 300 }, /* row 2 mid   */
+  { col: "lg:col-span-1", minH: 300 }, /* row 2 right */
+];
 
-function QuoteCard({ number, translationKey, imageData, reverse }) {
+function BentoCard({ number, translationKey, meta, span, delay }) {
   const { t } = useTranslation("quotes");
-  const roman = ROMAN[number - 1];
-  const isEven = reverse;
+  const { url, Icon, from, to } = meta;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative w-full overflow-hidden"
-      style={{
-        display: "grid",
-        gridTemplateColumns: isEven ? "1fr 1.1fr" : "1.1fr 1fr",
-        minHeight: 260,
-      }}
+      initial={{ opacity: 0, y: 30, scale: 0.97 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={`group relative overflow-hidden rounded-2xl cursor-default ${span.col}`}
+      style={{ minHeight: span.minH }}
     >
-      {/* ── IMAGE PANEL ── */}
+      {/* Background photo */}
       <div
-        style={{ order: isEven ? 2 : 1 }}
-        className="relative overflow-hidden"
-      >
-        {/* Photo */}
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+        style={{ backgroundImage: `url(${url})` }}
+      />
+
+      {/* Dark gradient overlay bottom-up */}
+      <div
+        className="absolute inset-0 transition-opacity duration-500"
+        style={{
+          background: `linear-gradient(
+            to top,
+            ${from}f2 0%,
+            ${from}cc 35%,
+            ${to}66 70%,
+            transparent 100%
+          )`,
+        }}
+      />
+
+      {/* Step number — top left */}
+      <div className="absolute top-5 left-5 flex items-center gap-2.5">
         <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-          style={{ backgroundImage: `url(${imageData.url})` }}
-        />
-        {/* Green tint overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(
-              ${isEven ? "270deg" : "90deg"},
-              ${imageData.accent}cc 0%,
-              ${imageData.accent}55 45%,
-              transparent 100%
-            )`,
-          }}
-        />
-        {/* Roman numeral watermark on image */}
-        <span
-          className="absolute select-none pointer-events-none font-black leading-none opacity-20 group-hover:opacity-30 transition-opacity duration-500"
-          style={{
-            fontSize: "clamp(80px, 12vw, 140px)",
-            color: "#fff",
-            bottom: "-10px",
-            [isEven ? "right" : "left"]: "12px",
-            fontFamily: "'Playfair Display', Georgia, serif",
-          }}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white border border-white/30 backdrop-blur-sm"
+          style={{ background: "rgba(255,255,255,0.15)" }}
         >
-          {roman}
-        </span>
-        {/* Icon badge */}
-        <div
-          className="absolute top-5 flex items-center justify-center w-11 h-11 rounded-xl shadow-lg backdrop-blur-sm"
-          style={{
-            [isEven ? "right" : "left"]: "20px",
-            background: "rgba(255,255,255,0.18)",
-            border: "1px solid rgba(255,255,255,0.35)",
-          }}
-        >
-          <imageData.Icon size={20} color="#fff" strokeWidth={1.8} />
+          {number}
         </div>
+        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
+          Step
+        </span>
       </div>
 
-      {/* ── CONTENT PANEL ── */}
+      {/* Icon — top right */}
       <div
+        className="absolute top-5 right-5 w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
         style={{
-          order: isEven ? 1 : 2,
-          background: number % 2 === 0 ? "#f9fdf9" : "#ffffff",
-          borderLeft: isEven ? "none" : `4px solid ${imageData.accent}`,
-          borderRight: isEven ? `4px solid ${imageData.accent}` : "none",
+          background: "rgba(255,255,255,0.12)",
+          border: "1px solid rgba(255,255,255,0.25)",
         }}
-        className="relative flex flex-col justify-center px-10 py-10 overflow-hidden"
       >
-        {/* Faint giant quote mark */}
-        <span
-          className="absolute pointer-events-none select-none leading-none font-serif opacity-[0.06] group-hover:opacity-[0.10] transition-opacity duration-500"
-          style={{
-            fontSize: 180,
-            color: imageData.accent,
-            top: "-20px",
-            right: "10px",
-            fontFamily: "'Playfair Display', Georgia, serif",
-          }}
-        >
-          "
-        </span>
+        <Icon size={18} color="#fff" strokeWidth={1.8} />
+      </div>
 
-        {/* Step label */}
-        <span
-          className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 block"
-          style={{ color: imageData.accent }}
-        >
-          Step {number}
-        </span>
+      {/* Content — pinned to bottom */}
+      <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 pt-10">
+        {/* Accent line */}
+        <div
+          className="w-8 h-[2px] rounded-full mb-3 transition-all duration-300 group-hover:w-14"
+          style={{ background: "linear-gradient(90deg,#86efac,transparent)" }}
+        />
 
-        {/* Title */}
         <h3
-          className="font-black leading-tight mb-3 transition-transform duration-300 group-hover:translate-x-1"
+          className="font-black text-white leading-snug mb-2 transition-transform duration-300 group-hover:-translate-y-0.5"
           style={{
-            fontSize: "clamp(17px, 2.2vw, 22px)",
-            color: "#1a3d2b",
+            fontSize: "clamp(20px, 2.2vw, 26px)",
             fontFamily: "'Playfair Display', Georgia, serif",
-            letterSpacing: "-0.01em",
+            textShadow: "0 2px 12px rgba(0,0,0,0.4)",
           }}
         >
           {t(`${translationKey}.title`)}
         </h3>
 
-        {/* Divider */}
-        <div
-          className="w-10 h-[2px] rounded-full mb-3 transition-all duration-300 group-hover:w-16"
-          style={{ background: `linear-gradient(90deg, ${imageData.accent}, transparent)` }}
-        />
-
-        {/* Body */}
         <p
-          className="leading-relaxed transition-transform duration-300 group-hover:translate-x-1"
-          style={{
-            fontSize: "clamp(12px, 1.3vw, 14px)",
-            color: "#4b5563",
-            maxWidth: 340,
-          }}
+          className="text-white/70 leading-relaxed transition-all duration-300 group-hover:text-white/90"
+          style={{ fontSize: "clamp(13px, 1.3vw, 15px)", maxWidth: 400 }}
         >
           {t(`${translationKey}.body`)}
         </p>
-
-        {/* Number badge bottom-right */}
-        <div
-          className="absolute bottom-5 right-6 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black shadow-md"
-          style={{ background: `linear-gradient(135deg, #1a6b3c, ${imageData.accent})` }}
-        >
-          {number}
-        </div>
       </div>
+
+      {/* Giant faint number watermark */}
+      <span
+        className="absolute right-3 top-1/2 -translate-y-1/2 font-black leading-none select-none pointer-events-none opacity-[0.06] group-hover:opacity-[0.10] transition-opacity duration-500 text-white"
+        style={{
+          fontSize: "clamp(90px, 14vw, 160px)",
+          fontFamily: "'Playfair Display', Georgia, serif",
+        }}
+      >
+        {number}
+      </span>
     </motion.div>
   );
 }
@@ -181,31 +149,30 @@ export default function QuotesSection() {
 
   return (
     <>
-      {/* Google Font */}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');`}</style>
 
       <section
         className="py-24 relative overflow-hidden"
-        style={{ background: "linear-gradient(160deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%)" }}
+        style={{ background: "linear-gradient(160deg,#f0fdf4 0%,#ecfdf5 50%,#f0fdf4 100%)" }}
       >
-        {/* Background grid texture */}
+        {/* Dot grid bg */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
-            backgroundImage: "radial-gradient(circle, #1a6b3c 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle,#1a6b3c 1px,transparent 1px)",
             backgroundSize: "28px 28px",
           }}
         />
 
-        <div className="max-w-4xl mx-auto px-6 relative">
+        <div className="max-w-6xl mx-auto px-6 relative">
 
-          {/* ── Section Header ── */}
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-14"
           >
             <span
               className="inline-block px-5 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] rounded-full mb-5"
@@ -216,7 +183,7 @@ export default function QuotesSection() {
             <h2
               className="font-black leading-tight"
               style={{
-                fontSize: "clamp(28px, 5vw, 42px)",
+                fontSize: "clamp(28px,5vw,42px)",
                 color: "#1a3d2b",
                 fontFamily: "'Playfair Display', Georgia, serif",
               }}
@@ -224,7 +191,7 @@ export default function QuotesSection() {
               {t("heading1")}{" "}
               <span
                 style={{
-                  background: "linear-gradient(135deg, #1a6b3c 0%, #43a047 60%, #86efac 100%)",
+                  background: "linear-gradient(135deg,#1a6b3c 0%,#43a047 60%,#86efac 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -235,23 +202,17 @@ export default function QuotesSection() {
             </h2>
           </motion.div>
 
-          {/* ── Cards ── */}
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{
-              boxShadow: "0 4px 40px rgba(21,128,61,0.10), 0 1px 0 rgba(255,255,255,0.8) inset",
-              border: "1px solid rgba(134,239,172,0.4)",
-            }}
-          >
+          {/* Bento Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {QUOTES.map((q, i) => (
-              <div key={q.translationKey} style={{ borderTop: i === 0 ? "none" : "1px solid #d1fae5" }}>
-                <QuoteCard
-                  number={i + 1}
-                  translationKey={q.translationKey}
-                  imageData={QUOTE_IMAGES[i] ?? QUOTE_IMAGES[0]}
-                  reverse={i % 2 !== 0}
-                />
-              </div>
+              <BentoCard
+                key={q.translationKey}
+                number={i + 1}
+                translationKey={q.translationKey}
+                meta={QUOTE_META[i] ?? QUOTE_META[0]}
+                span={GRID_SPANS[i]}
+                delay={i * 0.08}
+              />
             ))}
           </div>
 
