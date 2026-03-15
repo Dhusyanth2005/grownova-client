@@ -52,7 +52,7 @@ export default function HeroSection() {
 
           {/* Badge */}
           <FadeUp delay={0.05}>
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-green-200 rounded-full shadow-sm text-sm font-medium text-green-700 break-words">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-green-200 rounded-full shadow-sm text-sm font-medium text-green-700 break-words mt-8">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               {t("hero:badge")}
             </div>

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useState, useRef } from "react";
 import { Menu, X, Languages } from "lucide-react";
 import Logo from "../../assets/grownovabgless.png";
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "motion/react";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -22,53 +22,6 @@ export const scrollToSection = (href, delay = 0) => {
   else run();
 };
 
-/* ── Bouncing arrow pointing right toward the lang button ── */
-function LangHintArrow({ isMobile = false, currentLang = "en" }) {
-  // Show hint in the OTHER language so the user who can't read current lang understands
-  const label = currentLang === "en"
-    ? (isMobile ? "மொழி" : "மொழி மாற்று")
-    : (isMobile ? "Lang" : "Change");
-
-  return (
-    <motion.div
-      className="flex items-center gap-1 pointer-events-none select-none"
-      animate={{ x: [0, -5, 0] }}
-      transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <span
-        style={{
-          fontSize: isMobile ? 10 : 11,
-          fontWeight: 600,
-          color: "#15803d",
-          background: "#dcfce7",
-          border: "1px solid #86efac",
-          borderRadius: 999,
-          padding: isMobile ? "2px 6px" : "2px 8px",
-          whiteSpace: "nowrap",
-          lineHeight: 1.4,
-        }}
-      >
-        {label}
-      </span>
-      {/* Arrow SVG */}
-      <svg
-        width={isMobile ? 16 : 18}
-        height={isMobile ? 12 : 14}
-        viewBox="0 0 18 14"
-        fill="none"
-      >
-        <path
-          d="M1 7H13M8 2L13 7L8 12"
-          stroke="#15803d"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </motion.div>
-  );
-}
-
 export default function GrowNovaNavbar() {
   const { t, i18n } = useTranslation(["common", "navbar"]);
 
@@ -77,11 +30,18 @@ export default function GrowNovaNavbar() {
   const [visible, setVisible] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hovered, setHovered] = useState(null);
-  const [langOpen, setLangOpen] = useState(false);
 
   useMotionValueEvent(scrollY, "change", (v) => setVisible(v > 80));
 
   const currentLang = i18n.resolvedLanguage || "en";
+
+  // Determine the other language to display on the button
+  const otherLang = currentLang === "en" ? "ta" : "en";
+  const otherLangLabel = currentLang === "en" ? "தமிழ்" : "English";
+
+  const switchLanguage = () => {
+    i18n.changeLanguage(otherLang);
+  };
 
   const navItems = [
     { key: "home",     link: "#home"     },
@@ -151,54 +111,22 @@ export default function GrowNovaNavbar() {
             ))}
           </div>
 
-          {/* Right side: lang hint + lang button + join */}
-          <div className="relative z-20 flex items-center gap-2 shrink-0">
+          {/* Right side: language switch button + join */}
+          <div className="relative z-20 flex items-center gap-3 shrink-0">
 
-            {/* Lang hint arrow + button grouped together */}
-            <div className="flex items-center gap-1.5">
-              <LangHintArrow currentLang={currentLang} />
-              <div className="relative">
-                <button
-                  onClick={() => setLangOpen((p) => !p)}
-                  className="btn-neu flex items-center gap-1.5"
-                >
-                  <Languages size={17} style={{ color: "#1a6b3c" }} />
-                  <span className="uppercase text-xs tracking-wide" style={{ color: "#1a6b3c" }}>
-                    {currentLang}
-                  </span>
-                </button>
-
-                <AnimatePresence>
-                  {langOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="absolute right-0 mt-2 w-36 rounded-xl bg-white shadow-lg border border-green-100 overflow-hidden"
-                    >
-                      {LANGUAGES.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            i18n.changeLanguage(lang.code);
-                            setLangOpen(false);
-                          }}
-                          className={[
-                            "w-full text-left px-4 py-2.5 text-sm transition-colors",
-                            currentLang === lang.code
-                              ? "bg-green-50 text-green-800 font-semibold"
-                              : "text-gray-600 hover:bg-green-50 hover:text-green-700",
-                          ].join(" ")}
-                        >
-                          {lang.label}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            <button
+              onClick={switchLanguage}
+              className="btn-neu flex items-center gap-1.5 px-4 py-2"
+              title={currentLang === "en" ? "Switch to Tamil" : "Switch to English"}
+            >
+              <Languages size={17} style={{ color: "#1a6b3c" }} />
+              <span
+                className="text-sm font-medium tracking-wide"
+                style={{ color: "#1a6b3c" }}
+              >
+                {otherLangLabel}
+              </span>
+            </button>
 
             <a href="join" className="btn-join px-5 py-2">
               {t("common:joinFree")}
@@ -238,52 +166,19 @@ export default function GrowNovaNavbar() {
               <img src={Logo} alt="logo" className="w-30" />
             </a>
 
-            {/* Right: hint + lang button + hamburger */}
-            <div className="flex items-center gap-1">
+            {/* Right: language switch button + hamburger */}
+            <div className="flex items-center gap-2">
 
-              {/* Hint arrow + lang button */}
-              <div className="flex items-center gap-1">
-                <LangHintArrow isMobile currentLang={currentLang} />
-                <div className="relative">
-                  <button
-                    onClick={() => setLangOpen((p) => !p)}
-                    className="btn-neu-sm flex items-center gap-1"
-                  >
-                    <Languages size={19} />
-                    <span className="uppercase text-[11px] font-semibold tracking-wide">{currentLang}</span>
-                  </button>
-
-                  <AnimatePresence>
-                    {langOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                        transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="absolute right-0 mt-2 w-36 rounded-xl bg-white shadow-lg border border-green-100 overflow-hidden z-50"
-                      >
-                        {LANGUAGES.map((lang) => (
-                          <button
-                            key={lang.code}
-                            onClick={() => {
-                              i18n.changeLanguage(lang.code);
-                              setLangOpen(false);
-                            }}
-                            className={[
-                              "w-full text-left px-4 py-2.5 text-sm transition-colors",
-                              currentLang === lang.code
-                                ? "bg-green-50 text-green-800 font-semibold"
-                                : "text-gray-600 hover:bg-green-50 hover:text-green-700",
-                            ].join(" ")}
-                          >
-                            {lang.label}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+              <button
+                onClick={switchLanguage}
+                className="btn-neu-sm flex items-center gap-1 px-3 py-1.5"
+                title={currentLang === "en" ? "தமிழ்" : "English"}
+              >
+                <Languages size={18} style={{ color: "#1a6b3c" }} />
+                <span className="text-[12px] font-semibold tracking-wide" style={{ color: "#1a6b3c" }}>
+                  {otherLangLabel}
+                </span>
+              </button>
 
               {/* Hamburger */}
               <button

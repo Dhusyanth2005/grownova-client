@@ -84,3 +84,28 @@ export const TESTIMONIALS = [
   { translationKey: "t2", initials: "PS", gradient: "from-[#0f6e56] to-[#1d9e75]" },
   { translationKey: "t3", initials: "AM", gradient: "from-[#166534] to-[#16a34a]" },
 ];
+
+// ─── Data ─────────────────────────────────────────────────────
+export const ALL_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andaman and Nicobar Islands", "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+  "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
+];
+
+export const JOB_TYPES = [
+  { value: "part time", labelEN: "Part Time", labelTA: "பகுதி நேரம்" },
+  { value: "full time", labelEN: "Full Time", labelTA: "முழு நேரம்" },
+];
+
+export const PROFESSIONS = [
+  { value: "student",   labelEN: "Student",   labelTA: "மாணவர்" },
+  { value: "job",       labelEN: "Job",        labelTA: "வேலை" },
+  { value: "business",  labelEN: "Business",   labelTA: "வியாபாரம்" },
+  { value: "housewife", labelEN: "Housewife",  labelTA: "இல்லத்தரசி" },
+];

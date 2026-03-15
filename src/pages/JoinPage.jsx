@@ -1,47 +1,39 @@
 import { useState, useRef, useEffect } from "react";
 import Logo from "../assets/grownovabgless.png";
 import {
-  Play, CheckCircle, MessageCircle, ChevronRight,
-  User, Phone, Mail, Calendar, MapPin, Briefcase,
-  AlertTriangle, Clock, Search, ChevronDown, X,
+  Play,
+  CheckCircle,
+  MessageCircle,
+  ChevronRight,
+  User,
+  Phone,
+  Mail,
+  Calendar,
+  MapPin,
+  Briefcase,
+  AlertTriangle,
+  Clock,
+  Search,
+  ChevronDown,
+  X,
 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ALL_STATES, JOB_TYPES, PROFESSIONS } from "../data/Constants";
+
+import {
+  createCustomer,
+  getCurrentWebinar,
+  markWebinarCompleted,
+} from "../services/api";
 
 // ─── Config ───────────────────────────────────────────────────
-const WHATSAPP_NUMBER   = "916382612951";
-const WEBINAR_VIDEO_SRC = "https://webinar-gatekeeper.free-session-no-fees-just-join-and-learn.workers.dev/?expires=1773480600&token=c78019dc24bf54187f8062002cef4f3696f7ed035e98bfe16a9c8f11a09994d3";
-const REQUIRED_SECONDS  = 10; // change to 30 * 60 for production
-
-// ─── Data ─────────────────────────────────────────────────────
-const ALL_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
-  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
-  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
-  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
-  "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
-  "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
-];
-
-const JOB_TYPES = [
-  { value: "part-time", labelEN: "Part Time", labelTA: "பகுதி நேரம்" },
-  { value: "full-time", labelEN: "Full Time", labelTA: "முழு நேரம்" },
-];
-
-const PROFESSIONS = [
-  { value: "student",   labelEN: "Student",   labelTA: "மாணவர்" },
-  { value: "job",       labelEN: "Job",        labelTA: "வேலை" },
-  { value: "business",  labelEN: "Business",   labelTA: "வியாபாரம்" },
-  { value: "housewife", labelEN: "Housewife",  labelTA: "இல்லத்தரசி" },
-];
+const REQUIRED_SECONDS = 20 * 60; // change to 30 * 60 for production
 
 // ─── ComboBox ─────────────────────────────────────────────────
 function ComboBox({ value, onChange, options, placeholder, disabled }) {
   const [query, setQuery] = useState(value || "");
-  const [open, setOpen]   = useState(false);
-  const ref               = useRef(null);
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
   const filtered = options.filter((o) =>
     o.toLowerCase().includes((query || "").toLowerCase())
@@ -58,15 +50,17 @@ function ComboBox({ value, onChange, options, placeholder, disabled }) {
   useEffect(() => { if (!value) setQuery(""); }, [value]);
 
   const select = (opt) => { onChange(opt); setQuery(opt); setOpen(false); };
-  const clear  = (e)   => { e.stopPropagation(); setQuery(""); onChange(""); };
+  const clear = (e) => { e.stopPropagation(); setQuery(""); onChange(""); };
 
   return (
     <div ref={ref} className="relative">
-      <div className={
-        "flex items-center w-full rounded-xl border bg-white transition-all " +
-        (disabled ? "opacity-50 " : "") +
-        (open ? "border-green-400 ring-2 ring-green-100" : "border-green-200")
-      }>
+      <div
+        className={
+          "flex items-center w-full rounded-xl border bg-white transition-all " +
+          (disabled ? "opacity-50 " : "") +
+          (open ? "border-green-400 ring-2 ring-green-100" : "border-green-200")
+        }
+      >
         <Search size={13} className="ml-3 text-gray-400 shrink-0" />
         <input
           className="flex-1 px-2 py-3 text-sm text-green-900 placeholder-gray-300 outline-none bg-transparent"
@@ -212,6 +206,7 @@ function FormStep({ onNext }) {
     state: "", pincode: "", jobType: "", profession: "",
   });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const set    = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
   const setVal = (k) => (v) => setForm((p) => ({ ...p, [k]: v }));
@@ -229,10 +224,18 @@ function FormStep({ onNext }) {
     return e;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
-    onNext(form);
+
+    setLoading(true);
+    try {
+      await onNext(form);
+    } catch (err) {
+      alert(err.message || "Failed to save details. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -252,19 +255,12 @@ function FormStep({ onNext }) {
       </div>
 
       <div className="flex flex-col gap-5">
-
         {/* ── Basic ── */}
         <div className="bg-white rounded-2xl p-5 border border-green-100">
           <SectionHeader icon={User} en="Basic Personal Details" ta="அடிப்படை விவரங்கள்" />
           <div className="flex flex-col gap-4">
-
             <Field labelEN="Full Name" labelTA="முழு பெயர்" icon={User} error={errors.fullName} required>
-              <input
-                className={inputCls}
-                placeholder="Enter your full name"
-                value={form.fullName}
-                onChange={set("fullName")}
-              />
+              <input className={inputCls} placeholder="Enter your full name" value={form.fullName} onChange={set("fullName")} />
             </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -290,12 +286,7 @@ function FormStep({ onNext }) {
             </div>
 
             <Field labelEN="Date of Birth" labelTA="பிறந்த தேதி" icon={Calendar}>
-              <input
-                className={inputCls}
-                type="date"
-                value={form.dob}
-                onChange={set("dob")}
-              />
+              <input className={inputCls} type="date" value={form.dob} onChange={set("dob")} />
             </Field>
           </div>
         </div>
@@ -304,23 +295,12 @@ function FormStep({ onNext }) {
         <div className="bg-white rounded-2xl p-5 border border-green-100">
           <SectionHeader icon={MapPin} en="Location Details" ta="இடம் விவரங்கள்" />
           <div className="flex flex-col gap-4">
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field labelEN="City / Town" labelTA="நகரம்" icon={MapPin} error={errors.city} required>
-                <input
-                  className={inputCls}
-                  placeholder="Your city or town"
-                  value={form.city}
-                  onChange={set("city")}
-                />
+                <input className={inputCls} placeholder="Your city or town" value={form.city} onChange={set("city")} />
               </Field>
               <Field labelEN="District" labelTA="மாவட்டம்" error={errors.district} required>
-                <input
-                  className={inputCls}
-                  placeholder="Enter your district"
-                  value={form.district}
-                  onChange={set("district")}
-                />
+                <input className={inputCls} placeholder="Enter your district" value={form.district} onChange={set("district")} />
               </Field>
             </div>
 
@@ -351,8 +331,6 @@ function FormStep({ onNext }) {
         <div className="bg-white rounded-2xl p-5 border border-green-100">
           <SectionHeader icon={Briefcase} en="Work / Income Details" ta="வேலை விவரங்கள்" />
           <div className="flex flex-col gap-5">
-
-            {/* Job Type toggle */}
             <Field labelEN="Job Title / Type" labelTA="வேலை வகை" icon={Briefcase} error={errors.jobType} required>
               <div className="grid grid-cols-2 gap-3 mt-1">
                 {JOB_TYPES.map((t) => (
@@ -384,10 +362,8 @@ function FormStep({ onNext }) {
               </div>
             </Field>
 
-            {/* Divider */}
             <div className="h-px bg-green-100" />
 
-            {/* Current Profession */}
             <Field labelEN="Current Profession" labelTA="தொழில்" icon={Briefcase} error={errors.profession} required>
               <div className="grid grid-cols-2 gap-3 mt-1">
                 {PROFESSIONS.map((p) => (
@@ -418,7 +394,6 @@ function FormStep({ onNext }) {
                 ))}
               </div>
             </Field>
-
           </div>
         </div>
 
@@ -429,11 +404,12 @@ function FormStep({ onNext }) {
 
         <button
           onClick={handleSubmit}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl text-white font-extrabold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          disabled={loading}
+          className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl text-white font-extrabold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
           style={{ background: "linear-gradient(135deg,#1a6b3c,#43a047)" }}
         >
-          Continue to Webinar
-          <ChevronRight size={16} />
+          {loading ? "Saving..." : "Continue to Webinar"}
+          {!loading && <ChevronRight size={16} />}
         </button>
       </div>
     </motion.div>
@@ -441,12 +417,31 @@ function FormStep({ onNext }) {
 }
 
 // ─── STEP 2 — Video ───────────────────────────────────────────
-function VideoStep({ onNext }) {
-  const [agreed, setAgreed]       = useState(false);
-  const [playing, setPlaying]     = useState(false);
+function VideoStep({ onNext, customerId, userMobile, userName }) {
+  const [agreed, setAgreed] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [elapsed, setElapsed]     = useState(0);
-  const timerRef                  = useRef(null);
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef(null);
+
+  const [webinar, setWebinar] = useState(null);
+  const [loadingWebinar, setLoadingWebinar] = useState(true);
+  const [errorWebinar, setErrorWebinar] = useState(null);
+
+  useEffect(() => {
+    getCurrentWebinar()
+      .then((res) => {
+        if (res.data?.success && res.data.data) {
+          setWebinar(res.data.data);
+        } else {
+          setErrorWebinar("Could not load webinar information");
+        }
+      })
+      .catch((err) => {
+        setErrorWebinar(err.message || "Failed to load webinar");
+      })
+      .finally(() => setLoadingWebinar(false));
+  }, []);
 
   const startTimer = () => {
     if (timerRef.current) return;
@@ -464,10 +459,29 @@ function VideoStep({ onNext }) {
 
   useEffect(() => () => clearInterval(timerRef.current), []);
 
-  const pct       = Math.min((elapsed / REQUIRED_SECONDS) * 100, 100);
+  const pct = Math.min((elapsed / REQUIRED_SECONDS) * 100, 100);
   const remaining = REQUIRED_SECONDS - elapsed;
   const fmt = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  const handleComplete = async () => {
+    if (customerId) {
+      try {
+        await markWebinarCompleted(customerId);
+      } catch (err) {
+        console.warn("Failed to mark webinar completed:", err.message);
+      }
+    }
+    onNext();
+  };
+
+  if (loadingWebinar) {
+    return <div className="text-center py-20 text-green-700">Loading webinar...</div>;
+  }
+
+  if (errorWebinar || !webinar) {
+    return <div className="text-center py-10 text-red-600">{errorWebinar || "No webinar configured"}</div>;
+  }
 
   return (
     <motion.div
@@ -477,96 +491,79 @@ function VideoStep({ onNext }) {
       transition={{ duration: 0.3 }}
     >
       <div className="mb-6">
-        <h2 className="text-xl sm:text-2xl font-extrabold text-green-950 mb-1">
-          Watch the Webinar
-        </h2>
-        <p className="text-sm text-gray-400">
-          வெபினார் பார்க்கவும் — Watch the full 30 minutes
-        </p>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-green-950 mb-1">Watch the Webinar</h2>
+        <p className="text-sm text-gray-400">வெபினார் பார்க்கவும் — Watch the full 30 minutes</p>
       </div>
 
-      {/* Warning */}
       <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
         <AlertTriangle size={17} className="text-amber-500 shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-bold text-amber-800 mb-1.5">
-            முக்கியமான அறிவிப்பு — Important Notice
-          </p>
+          <p className="text-sm font-bold text-amber-800 mb-1.5">முக்கியமான அறிவிப்பு — Important Notice</p>
           <ul className="text-xs text-amber-700 leading-relaxed space-y-1">
             <li className="flex items-start gap-1.5">
               <span className="text-amber-400 shrink-0 mt-0.5">•</span>
-              This video is <strong>30 minutes</strong> long — watch completely
+              <span>This video is <strong>30 minutes</strong> long — watch completely. <span className="text-amber-600">இந்த வீடியோ <strong>30 நிமிடம்</strong> — முழுவதும் பாருங்கள்.</span></span>
             </li>
             <li className="flex items-start gap-1.5">
               <span className="text-amber-400 shrink-0 mt-0.5">•</span>
-              Do not pause or skip — முடிக்காமல் நிறுத்தாதீர்கள்
+              <span>Do not pause or skip. <span className="text-amber-600">முடிக்காமல் நிறுத்தாதீர்கள், தவிர்க்காதீர்கள்.</span></span>
             </li>
             <li className="flex items-start gap-1.5">
               <span className="text-amber-400 shrink-0 mt-0.5">•</span>
-              Full company details are revealed only at the end
+              <span>Full company details are revealed only at the end. <span className="text-amber-600">நிறுவனத்தின் முழு விவரங்கள் கடைசியில் மட்டுமே தெரியும்.</span></span>
             </li>
             <li className="flex items-start gap-1.5">
               <span className="text-amber-400 shrink-0 mt-0.5">•</span>
-              After watching, connect via WhatsApp to get started
+              <span>After watching, connect via WhatsApp to get started. <span className="text-amber-600">பார்த்த பிறகு, தொடங்க WhatsApp-ல் தொடர்பு கொள்ளுங்கள்.</span></span>
             </li>
           </ul>
+
+          {/* Contact button — only renders once webinar is loaded (webinar is guaranteed non-null here) */}
+          <div className="mt-4 pt-3 border-t border-amber-200">
+            <p className="text-[11px] text-amber-700 mb-2">
+              Video expired or not working? / வீடியோ காண முடியவில்லையா?
+            </p>
+            <a
+              href={`https://wa.me/${webinar.whatsappNo}?text=${encodeURIComponent(
+                `Hi! I am not able to see the video on the Grow Nova webinar page.\n\nName: ${userName || "(not provided)"}\nMobile: ${userMobile || "(not provided)"}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white"
+              style={{ background: "linear-gradient(135deg,#16a34a,#22c55e)" }}
+            >
+              <MessageCircle size={13} />
+              Contact Us on WhatsApp / தொடர்பு கொள்ளுங்கள்
+            </a>
+          </div>
         </div>
       </div>
 
-      {/* Agree */}
       {!playing && (
         <label className="flex items-start gap-3 cursor-pointer mb-5 p-4 bg-green-50 rounded-xl border-2 border-green-100 hover:border-green-300 transition-colors">
-          <div
-            className={
-              "w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all " +
-              (agreed ? "border-green-600 bg-green-600" : "border-green-300 bg-white")
-            }
-          >
+          <div className={"w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all " + (agreed ? "border-green-600 bg-green-600" : "border-green-300 bg-white")}>
             {agreed && <CheckCircle size={12} className="text-white" />}
           </div>
-          <input
-            type="checkbox"
-            checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-            className="hidden"
-          />
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="hidden" />
           <span className="text-sm text-green-900 font-medium leading-snug">
             I agree to watch the full 30-minute webinar without pausing or skipping.{" "}
-            <span className="text-green-600 text-xs">
-              நான் முழு வீடியோவையும் பார்ப்பேன் என்று உறுதியளிக்கிறேன்.
-            </span>
+            <span className="text-green-600 text-xs">நான் முழு வீடியோவையும் பார்ப்பேன் என்று உறுதியளிக்கிறேன்.</span>
           </span>
         </label>
       )}
 
-      {/* Video thumbnail or player */}
       {!playing ? (
         <button
           disabled={!agreed}
           onClick={() => { setPlaying(true); startTimer(); }}
-          className={
-            "relative w-full rounded-2xl overflow-hidden group transition-all " +
-            (!agreed
-              ? "opacity-40 cursor-not-allowed"
-              : "cursor-pointer hover:ring-4 hover:ring-green-200")
-          }
+          className={"relative w-full rounded-2xl overflow-hidden group transition-all " + (!agreed ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:ring-4 hover:ring-green-200")}
           style={{ aspectRatio: "16/9", minHeight: "240px" }}
         >
           <div className="absolute inset-0 bg-green-950 flex items-center justify-center">
-            <div
-              className="absolute inset-0 opacity-[0.07]"
-              style={{
-                backgroundImage:
-                  "linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px)",
-                backgroundSize: "40px 40px",
-              }}
-            />
+            <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
             <div className="relative z-10 flex flex-col items-center gap-4">
               <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/15 transition-all">
-                <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl"
-                  style={{ background: "linear-gradient(135deg,#1a6b3c,#43a047)" }}
-                >
+                <div className="w-14 h-14 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl" style={{ background: "linear-gradient(135deg,#1a6b3c,#43a047)" }}>
                   <Play size={22} className="text-white ml-1" fill="white" />
                 </div>
               </div>
@@ -580,27 +577,17 @@ function VideoStep({ onNext }) {
           </div>
         </button>
       ) : (
-        <div
-          className="w-full rounded-2xl overflow-hidden border-2 border-green-200"
-          style={{ position: "relative", paddingBottom: "56.25%" }}
-        >
+        <div className="w-full rounded-2xl overflow-hidden border-2 border-green-200" style={{ position: "relative", paddingBottom: "56.25%" }}>
           <iframe
-            src={WEBINAR_VIDEO_SRC}
+            src={webinar.webinarLink}
             title="Grow Nova Webinar"
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
           />
         </div>
       )}
 
-      {/* Progress bar */}
       {playing && (
         <div className="mt-5 bg-green-50 rounded-2xl p-4 border border-green-100">
           <div className="flex justify-between items-center mb-2">
@@ -611,18 +598,10 @@ function VideoStep({ onNext }) {
             <span className="text-xs font-bold text-green-600">{Math.round(pct)}%</span>
           </div>
           <div className="h-2.5 bg-green-200 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-1000"
-              style={{
-                width: pct + "%",
-                background: "linear-gradient(90deg,#1a6b3c,#43a047)",
-              }}
-            />
+            <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: "linear-gradient(90deg,#1a6b3c,#43a047)" }} />
           </div>
           <p className="text-[11px] text-gray-400 mt-2 text-center">
-            {completed
-              ? "வெபினார் முடிந்தது! You can now proceed."
-              : "Please watch completely — skip செய்யாதீர்கள்"}
+            {completed ? "வெபினார் முடிந்தது! You can now proceed." : "Please watch completely — skip செய்யாதீர்கள்"}
           </p>
         </div>
       )}
@@ -631,7 +610,7 @@ function VideoStep({ onNext }) {
         <motion.button
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          onClick={onNext}
+          onClick={handleComplete}
           className="mt-5 w-full flex items-center justify-center gap-2 py-4 rounded-xl text-white font-extrabold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
           style={{ background: "linear-gradient(135deg,#1a6b3c,#43a047)" }}
         >
@@ -645,10 +624,38 @@ function VideoStep({ onNext }) {
 
 // ─── STEP 3 — Success ─────────────────────────────────────────
 function SuccessStep({ formData }) {
+  const [whatsappNo, setWhatsappNo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCurrentWebinar()
+      .then((res) => {
+        if (res.data?.success && res.data.data?.whatsappNo) {
+          setWhatsappNo(res.data.data.whatsappNo);
+        }
+      })
+      .catch(() => {
+        console.warn("Could not fetch whatsapp number in success step");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const message = encodeURIComponent(
-    `Hi! I just completed the Grow Nova webinar.\n\nName: ${formData.fullName}\nMobile: ${formData.mobile}\nCity: ${formData.city}\nDistrict: ${formData.district}\nState: ${formData.state}\nJob Type: ${formData.jobType}\nProfession: ${formData.profession}\n\nI am interested in joining Grow Nova!`
+    `Hi! I just completed the Grow Nova webinar.\n\n` +
+    `Name: ${formData.fullName}\n` +
+    `Mobile: ${formData.mobile}\n` +
+    `City: ${formData.city}\n` +
+    `District: ${formData.district}\n` +
+    `State: ${formData.state}\n` +
+    `Job Type: ${formData.jobType}\n` +
+    `Profession: ${formData.profession}\n\n` +
+    `I am interested in joining Grow Nova!`
   );
-  const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+
+  // Use fetched number, fallback to a default if still null
+  const waUrl = whatsappNo
+    ? `https://wa.me/${whatsappNo}?text=${message}`
+    : `https://wa.me/916382612951?text=${message}`; // fallback
 
   return (
     <motion.div
@@ -680,21 +687,20 @@ function SuccessStep({ formData }) {
         on WhatsApp to take the next step.
       </p>
 
-      {/* Summary */}
       <div className="bg-green-50 border border-green-200 rounded-2xl p-5 mb-6 text-left">
         <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-4">
           Your Submitted Details / உங்கள் விவரங்கள்
         </p>
         <div className="grid grid-cols-2 gap-4">
           {[
-            ["Name / பெயர்",         formData.fullName],
-            ["Mobile / மொபைல்",      formData.mobile],
-            ["City / நகரம்",         formData.city],
-            ["District / மாவட்டம்",  formData.district],
-            ["State / மாநிலம்",      formData.state],
-            ["Pin Code",              formData.pincode || "—"],
-            ["Job Type / வேலை வகை",  formData.jobType],
-            ["Profession / தொழில்",  formData.profession],
+            ["Name / பெயர்", formData.fullName],
+            ["Mobile / மொபைல்", formData.mobile],
+            ["City / நகரம்", formData.city],
+            ["District / மாவட்டம்", formData.district],
+            ["State / மாநிலம்", formData.state],
+            ["Pin Code", formData.pincode || "—"],
+            ["Job Type / வேலை வகை", formData.jobType],
+            ["Profession / தொழில்", formData.profession],
           ].map(([k, v]) => (
             <div key={k} className="flex flex-col gap-0.5">
               <span className="text-[10px] text-gray-400 uppercase tracking-wide">{k}</span>
@@ -704,16 +710,20 @@ function SuccessStep({ formData }) {
         </div>
       </div>
 
-      <a
-        href={waUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-3 w-full py-4 rounded-xl text-white font-extrabold text-base shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all"
-        style={{ background: "linear-gradient(135deg,#16a34a,#22c55e)" }}
-      >
-        <MessageCircle size={20} />
-        Join via WhatsApp Now
-      </a>
+      {loading ? (
+        <div className="w-full py-4 text-center text-gray-500">Loading WhatsApp link...</div>
+      ) : (
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-3 w-full py-4 rounded-xl text-white font-extrabold text-base shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all"
+          style={{ background: "linear-gradient(135deg,#16a34a,#22c55e)" }}
+        >
+          <MessageCircle size={20} />
+          Join via WhatsApp Now
+        </a>
+      )}
 
       <p className="text-xs text-gray-400 mt-4">
         WhatsApp இல் நேரடியாக தொடர்பு கொள்ளுங்கள்
@@ -724,14 +734,42 @@ function SuccessStep({ formData }) {
 
 // ─── Main Page ────────────────────────────────────────────────
 export default function JoinPage() {
-  const [step, setStep]         = useState(1);
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(null);
+  const [customerId, setCustomerId] = useState(null);
 
-  const handleFormNext = (data) => { setFormData(data); setStep(2); };
+  const handleFormNext = async (data) => {
+    try {
+      const payload = {
+        fullName: data.fullName.trim(),
+        mobileNo: data.mobile,
+        email: data.email?.trim() || undefined,
+        dateOfBirth: data.dob ? new Date(data.dob).toISOString() : undefined,
+        city: data.city.trim(),
+        district: data.district.trim(),
+        state: data.state,
+        pincode: data.pincode?.trim() || undefined,
+        jobTitle: data.jobType,
+        currentProfession: data.profession,
+        isWebinarCompleted: false,
+      };
+
+      const res = await createCustomer(payload);
+
+      if (res.data?.success) {
+        setCustomerId(res.data.data._id);
+        setFormData(data);
+        setStep(2);
+      } else {
+        alert(res.data?.message || "Failed to register");
+      }
+    } catch (err) {
+      alert(err.message || "Cannot connect to server");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-start justify-center px-4 py-12">
-
       <div
         className="fixed inset-0 pointer-events-none opacity-25"
         style={{
@@ -740,22 +778,16 @@ export default function JoinPage() {
         }}
       />
 
-      <div className={
-        "relative z-10 w-full transition-all duration-300 " +
-        (step === 2 ? "max-w-5xl" : "max-w-3xl")
-      }>
-
-        {/* Logo */}
+      <div className={"relative z-10 w-full transition-all duration-300 " + (step === 2 ? "max-w-5xl" : "max-w-3xl")}>
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 mb-3">
-           <img src={Logo} alt="logo" className="w-60" />
+            <img src={Logo} alt="logo" className="w-60" />
           </div>
           <p className="text-sm text-gray-400">
             உங்கள் எதிர்கால பயணம் இங்கே தொடங்குகிறது — Your journey starts here
           </p>
         </div>
 
-        {/* Card */}
         <div className="bg-white border border-green-100 rounded-3xl shadow-sm px-5 sm:px-8 py-8 sm:py-10">
           <StepBar step={step} />
 
@@ -765,11 +797,18 @@ export default function JoinPage() {
                 <FormStep onNext={handleFormNext} />
               </motion.div>
             )}
+
             {step === 2 && (
               <motion.div key="step2">
-                <VideoStep onNext={() => setStep(3)} />
+                <VideoStep
+                  onNext={() => setStep(3)}
+                  customerId={customerId}
+                  userMobile={formData?.mobile}
+                  userName={formData?.fullName}
+                />
               </motion.div>
             )}
+
             {step === 3 && (
               <motion.div key="step3">
                 <SuccessStep formData={formData} />

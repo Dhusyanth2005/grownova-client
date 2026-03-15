@@ -177,8 +177,10 @@ i18n
           "platform.training": "Training",
           "platform.webinar": "Webinar",
           "platform.stories": "Success Stories",
+          "support.title": "Support",
           "support.privacy": "Privacy Policy",
-          "support.terms": "Terms & Conditions",
+          "support.customerSecurity": "Customer Security Policy",
+          "support.businessDescription": "Business Description",
           "contact.email": "Email",
           "contact.location": "Location",
           "contact.whatsapp": "WhatsApp",
@@ -190,7 +192,7 @@ i18n
       },
       ta: {
         common: {
-          joinFree: "இலவசமாக சேரவும்",
+          joinFree: "சேருங்கள்",
           whoIsItFor: "யாருக்காக?", // Shorter: "For whom?"
           builtFor: "வடிவமைக்கப்பட்டது:", // Shorter: "Designed for:"
           ambitiousBeginners: "ஆர்வமுள்ள புதியவர்களுக்கு", // "Newcomers" is shorter than "Beginners"
@@ -349,8 +351,10 @@ i18n
           "platform.training": "பயிற்சி",
           "platform.webinar": "வெபினார்",
           "platform.stories": "வெற்றிக் கதைகள்",
-          "support.privacy": "தனியுரிமைக் கொள்கை",
-          "support.terms": "விதிமுறைகள்",
+          "support.title": "உதவி", // "Help/Support" (Shortest)
+          "support.privacy": "தனியுரிமைக் கொள்கை", // "Privacy Policy"
+          "support.customerSecurity": "வாடிக்கையாளர் பாதுகாப்பு", // "Customer Security"
+          "support.businessDescription": "வணிக விவரம்",
           "contact.email": "மின்னஞ்சல்",
           "contact.location": "இருப்பிடம்",
           "contact.whatsapp": "வாட்ஸ்அப்",
