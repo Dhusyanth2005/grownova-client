@@ -524,7 +524,7 @@ function VideoStep({ onNext, customerId, userMobile, userName }) {
               Video expired or not working? / வீடியோ காண முடியவில்லையா?
             </p>
             <a
-              href={`https://wa.me/${webinar.whatsappNo}?text=${encodeURIComponent(
+              href={`https://wa.me/91${webinar.whatsappNo}?text=${encodeURIComponent(
                 `Hi! I am not able to see the video on the Grow Nova webinar page.\n\nName: ${userName || "(not provided)"}\nMobile: ${userMobile || "(not provided)"}`
               )}`}
               target="_blank"
@@ -654,7 +654,7 @@ function SuccessStep({ formData }) {
 
   // Use fetched number, fallback to a default if still null
   const waUrl = whatsappNo
-    ? `https://wa.me/${whatsappNo}?text=${message}`
+    ? `https://wa.me/91${whatsappNo}?text=${message}`
     : `https://wa.me/916382612951?text=${message}`; // fallback
 
   return (
