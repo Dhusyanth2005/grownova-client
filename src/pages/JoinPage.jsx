@@ -422,12 +422,18 @@ function VideoStep({ onNext, customerId, userMobile, userName }) {
   const [playing, setPlaying] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const timerRef = useRef(null);
+
+  // Separate state for Contact Button
+  const [showContactButton, setShowContactButton] = useState(false);
+
+  const mainTimerRef = useRef(null);
+  const contactTimerRef = useRef(null);
 
   const [webinar, setWebinar] = useState(null);
   const [loadingWebinar, setLoadingWebinar] = useState(true);
   const [errorWebinar, setErrorWebinar] = useState(null);
 
+  // Fetch webinar data
   useEffect(() => {
     getCurrentWebinar()
       .then((res) => {
@@ -443,21 +449,35 @@ function VideoStep({ onNext, customerId, userMobile, userName }) {
       .finally(() => setLoadingWebinar(false));
   }, []);
 
-  const startTimer = () => {
-    if (timerRef.current) return;
-    timerRef.current = setInterval(() => {
+  const startTimers = () => {
+    if (mainTimerRef.current) return;
+
+    // === 1. Main Timer for Webinar Completion (30 minutes / 20 minutes for testing) ===
+    mainTimerRef.current = setInterval(() => {
       setElapsed((prev) => {
-        if (prev + 1 >= REQUIRED_SECONDS) {
-          clearInterval(timerRef.current);
+        const newTime = prev + 1;
+        if (newTime >= REQUIRED_SECONDS) {   // This is only for completion
+          clearInterval(mainTimerRef.current);
           setCompleted(true);
-          return REQUIRED_SECONDS;
         }
-        return prev + 1;
+        return newTime;
       });
     }, 1000);
+
+    // === 2. Separate Timer for Contact Button (1 minute) ===
+    // This is completely independent
+    contactTimerRef.current = setTimeout(() => {
+      setShowContactButton(true);
+    }, 90000); // ← 60 seconds = 1 minute
   };
 
-  useEffect(() => () => clearInterval(timerRef.current), []);
+  // Cleanup timers when component unmounts
+  useEffect(() => {
+    return () => {
+      if (mainTimerRef.current) clearInterval(mainTimerRef.current);
+      if (contactTimerRef.current) clearTimeout(contactTimerRef.current);
+    };
+  }, []);
 
   const pct = Math.min((elapsed / REQUIRED_SECONDS) * 100, 100);
   const remaining = REQUIRED_SECONDS - elapsed;
@@ -495,10 +515,13 @@ function VideoStep({ onNext, customerId, userMobile, userName }) {
         <p className="text-sm text-gray-400">வெபினார் பார்க்கவும் — Watch the full 30 minutes</p>
       </div>
 
+      {/* Important Notice Box */}
       <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
         <AlertTriangle size={17} className="text-amber-500 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-bold text-amber-800 mb-1.5">முக்கியமான அறிவிப்பு — Important Notice</p>
+        <div className="flex-1">
+          <p className="text-sm font-bold text-amber-800 mb-1.5">
+            முக்கியமான அறிவிப்பு — Important Notice
+          </p>
           <ul className="text-xs text-amber-700 leading-relaxed space-y-1">
             <li className="flex items-start gap-1.5">
               <span className="text-amber-400 shrink-0 mt-0.5">•</span>
@@ -518,27 +541,37 @@ function VideoStep({ onNext, customerId, userMobile, userName }) {
             </li>
           </ul>
 
-          {/* Contact button — only renders once webinar is loaded (webinar is guaranteed non-null here) */}
-          <div className="mt-4 pt-3 border-t border-amber-200">
-            <p className="text-[11px] text-amber-700 mb-2">
-              Video expired or not working? / வீடியோ காண முடியவில்லையா?
-            </p>
-            <a
-              href={`https://wa.me/91${webinar.whatsappNo}?text=${encodeURIComponent(
-                `Hi! I am not able to see the video on the Grow Nova webinar page.\n\nName: ${userName || "(not provided)"}\nMobile: ${userMobile || "(not provided)"}`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white"
-              style={{ background: "linear-gradient(135deg,#16a34a,#22c55e)" }}
-            >
-              <MessageCircle size={13} />
-              Contact Us on WhatsApp / தொடர்பு கொள்ளுங்கள்
-            </a>
-          </div>
+          {/* Contact Button - Shows after its own 1 minute timer */}
+          <AnimatePresence>
+            {showContactButton && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="mt-4 pt-3 border-t border-amber-200"
+              >
+                <p className="text-[11px] text-amber-700 mb-2">
+                  Video expired or not working? / வீடியோ காண முடியவில்லையா?
+                </p>
+                <a
+                  href={`https://wa.me/91${webinar.whatsappNo}?text=${encodeURIComponent(
+                    `Hi! I am not able to see the video on the Grow Nova webinar page.\n\nName: ${userName || "(not provided)"}\nMobile: ${userMobile || "(not provided)"}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white"
+                  style={{ background: "linear-gradient(135deg,#16a34a,#22c55e)" }}
+                >
+                  <MessageCircle size={13} />
+                  Contact Us on WhatsApp / தொடர்பு கொள்ளுங்கள்
+                </a>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
+      {/* Agreement Checkbox */}
       {!playing && (
         <label className="flex items-start gap-3 cursor-pointer mb-5 p-4 bg-green-50 rounded-xl border-2 border-green-100 hover:border-green-300 transition-colors">
           <div className={"w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all " + (agreed ? "border-green-600 bg-green-600" : "border-green-300 bg-white")}>
@@ -552,10 +585,14 @@ function VideoStep({ onNext, customerId, userMobile, userName }) {
         </label>
       )}
 
+      {/* Play Button or Video */}
       {!playing ? (
         <button
           disabled={!agreed}
-          onClick={() => { setPlaying(true); startTimer(); }}
+          onClick={() => {
+            setPlaying(true);
+            startTimers();        // Starts both independent timers
+          }}
           className={"relative w-full rounded-2xl overflow-hidden group transition-all " + (!agreed ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:ring-4 hover:ring-green-200")}
           style={{ aspectRatio: "16/9", minHeight: "240px" }}
         >
@@ -588,6 +625,7 @@ function VideoStep({ onNext, customerId, userMobile, userName }) {
         </div>
       )}
 
+      {/* Progress Bar */}
       {playing && (
         <div className="mt-5 bg-green-50 rounded-2xl p-4 border border-green-100">
           <div className="flex justify-between items-center mb-2">
@@ -606,6 +644,7 @@ function VideoStep({ onNext, customerId, userMobile, userName }) {
         </div>
       )}
 
+      {/* Continue to Next Step */}
       {completed && (
         <motion.button
           initial={{ opacity: 0, y: 12 }}
@@ -655,7 +694,7 @@ function SuccessStep({ formData }) {
   // Use fetched number, fallback to a default if still null
   const waUrl = whatsappNo
     ? `https://wa.me/91${whatsappNo}?text=${message}`
-    : `https://wa.me/916382612951?text=${message}`; // fallback
+    : `https://wa.me/919994295454?text=${message}`; // fallback
 
   return (
     <motion.div
